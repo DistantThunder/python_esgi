@@ -1,0 +1,10 @@
+list=[17,20,38,26,68,45]
+print(list)
+list.append(17)
+print(list)
+print(list.count(17))
+list.reverse()
+print(list)
+print(len(list))
+print(list.index(10))
+list.pop(
