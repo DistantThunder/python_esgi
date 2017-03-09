@@ -77,11 +77,10 @@ def add_user():
 ## Sinon demande une saisie à l'utilisateur
 def check_user(user=""):
     # Un string vide renverra 'False', donc il vaut mieux inverser le test ici.
-    print("At this point, username is:", user)
     if user == "":
         user = input("Which user are you looking for?\n>>> ")
 
-    print("Checking user {:s}".format(user))
+    print("Checking user ' {:s} ' ...".format(user))
     dbcon_object.execute("SELECT uid,username FROM users WHERE username = ?", [user])
     return dbcon_object.fetchall()
 
@@ -89,16 +88,39 @@ def check_user(user=""):
 def delete_user():
         user = input("Which user are you deleting? \n>>> ")
         qResult = check_user(user)
-        if len(qResult) > 0:
-            print("Des utilisateurs ont été trouvés.\n")
-        elif len(qResult) = 1:
-            break
-        elif len(qResult) = 0:
+        if len(qResult) == 1:
+            print("Un utilisateur a été trouvé.")
+            print("Voulez-vous effacer l'utilisateur {:s} ? o/N".format(qResult[0][1]))
+            answer = input(">>>")
+            if answer == ("O" or "o"):
+                print("ATTENTION! Cette opération est irréversible!!\nEntrez 'OK' en toutes lettres pour confirmer:\n")
+                confirm = input(">>>")
+                if confirm == "OK":
+                    print("Deleting {:s}...\n".format(qResult[0][1]))
+                    dbcon_object.execute("DELETE FROM users WHERE uid = ? AND username = ?", [qResult[0][0], qResult[0][1]])
+                    print("Done!")
+                else:
+                    print("Confirmation non reçue. Arrêt...\n")
+                    exit(1)
+            elif answer == ("N" or "n"):
+                print("Il s'agit du seul utilisateur trouvé. Arrêt...\n")
+                exit(0)
+            else:
+                print("Nous n'avons pas compris votre réponse. Arrêt...\n")
+                exit(1)
+        elif len(qResult) == 0:
             print("Aucun utilisateur avec ce nom trouvé!!\n")
             exit(0)
         else:
+            print("Attention, plusieurs utilisateurs trouvés avec ce nom!\n")
+            print("+------------------------------------------------------+")
+            print("|           UID           |      Nom d'utilisateur     |")
+            print("+------------------------------------------------------+")
             for i in qResult:
-                print("Utilisateur: {:s} avec UID {:d}".format(qResult[0],qResult[1]))
+                print("|{:d}                        |{:s}                        |".format(i[0], i[1]))
+            print("+------------------------------------------------------+")
+
+            del_id = input("Entrez l'UID de l'utilisateur à supprimer:\n>>> ")
 
         print("Done !\n")
 
@@ -109,14 +131,14 @@ def delete_user():
 
 admin = 1
 
+db_initialize("users")
+
 ### SEUL L'ADMIN PEUT SUPPRIMER DES UTILISATEURS ARBITRAIREMENT
 if admin == 1:
     delete_user()
-else
+else:
     print("Your are not admin!!\nExiting...")
     exit(1)
-
-db_initialize("users")
 
 # ENREGISTREMENT DES CHANGEMENTS SUR LA BDD "PHYSIQUE"
 db_object.commit()
