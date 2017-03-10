@@ -16,18 +16,18 @@ dbcon_object = db_object.cursor()
 
 
 def db_initialize(tableName):
-    # REQUÊTES SQLITE EFFECTUÉES AVEC SUBSTITUTION '?' AFIN DE MINIMISER RISQUES INJECTION SQL
+
     dbcon_object.execute("SELECT 1 FROM sqlite_master WHERE type = ? AND name = ?", ["table", tableName])
     qResult = dbcon_object.fetchone()
-    # L'EVALUATION RENVOIE 'False' SI qResult N'A AUCUN TYPE (==VIDE). DONC :
-    # SI qResult *- A UN TYPE -* ET DONC *-N'EST PAS VIDE-*, LA REQUÊTE SQLite PRÉCÉDENTE
-    # A RENVOYÉ UNE VALEUR -> LA TABLE A ÉTÉ TROUVÉE.
+
+
+
     if qResult:
         print("Checking DATABASE...\nSQLite table ' {:s} ' exists! Proceeding...\n".format(tableName))
         return 0
     else:
         print("Table ' {:s} ' does not exist! Creating it before continuing...\n".format(tableName))
-        # NOTE : LES NOMS DE TABLES NE **PEUVENT PAS** ÊTRE PASSÉS EN SUBSTITUTION DE PARAMÈTRE '?'!!!!
+
         dbcon_object.execute("DROP TABLE IF EXISTS %s" % tableName)
         dbcon_object.execute("""CREATE TABLE %s (
                                 uid INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
@@ -62,7 +62,7 @@ def add_user():
 
 
 def check_user(user=""):
-    # Un string vide renverra 'False', donc il vaut mieux inverser le test ici.
+
     if user == "":
         user = input("Which user are you looking for?\n>>> ")
 
