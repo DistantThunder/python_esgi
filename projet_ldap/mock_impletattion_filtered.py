@@ -50,15 +50,23 @@ def hashing(input_password):
         return md5hash.hexdigest()
 
 
+# Fonction d'ajout d'utilisateur
 def add_user():
+# On saisit le nom d'utilisateur
     username = (input("Saisissez un nouvel utilisateur:\n>>> "))
+# On utilise la fonction genpasswd() définie précédemment
     motpasse = genpasswd()
+# On hashe le mot de passe généré en employant la fonction hashing définie précédemment
     pwHash = (hashing(motpasse))
+# On récupère le nom d'utilisateur et le hash du mot de passe pour en faire une nouvelle entrée
     new_user = (username,pwHash)
+# On affiche tout ce qu'on a fait précédemment (nom; mot de passe; hash)
     print("Utilisateur => ' {:s} '\nMot de passe => {:s} \nHash => {:s}".format(new_user[0], motpasse, new_user[1]))
     print("New user is : ", new_user)
+# on l'ajoute dans la BDD
     dbcon_object.execute("INSERT INTO users VALUES(null,?,?)", new_user)
     return 0
+
 
 
 def check_user(user=""):
