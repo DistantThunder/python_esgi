@@ -67,7 +67,6 @@ def add_user():
     pwHash = (hashing(motpasse))
     new_user = (username,pwHash)
     print("Utilisateur => ' {:s} '\nMot de passe => {:s} \nHash => {:s}".format(new_user[0], motpasse, new_user[1]))
-    print("New user is : ", new_user)
     dbcon_cursor.execute("INSERT INTO users VALUES(null,?,?)", new_user)
     return 0
 

@@ -12,8 +12,10 @@ import sqlite3
 
 
 # Déclaration de la BDD
+### Nope.
 userdb = {}
 # Déclaration de script
+### Nope.
 script = argv
 # On créé la liste des caractères qu'on va employer pour générer les mots de passe, ici ça sera chiffres et lettres (majuscules comme minuscules)
 char_space=string.ascii_letters+string.digits
@@ -27,9 +29,12 @@ dbcon_object = db_object.cursor()
 
 
 # On créé une table dans la BDD
+### Plutôt, on crée une fonction "db_initialize" qui prend OBLIGATOIREMENT en paramètre un argument.
+### Cet argument quel qu'il soit sera rangé dans la variable "tableName".
 def db_initialize(tableName):
 
 # Execution d'une requète SQL demandant d'entrer le nom de la table voulue
+### Nope.
     dbcon_object.execute("SELECT 1 FROM sqlite_master WHERE type = ? AND name = ?", ["table", tableName])
 # On rentre le résultat dans une variable qu'on utilisera ensuite, mais juste la première valeur
     qResult = dbcon_object.fetchone()
@@ -52,6 +57,7 @@ def db_initialize(tableName):
         return 0
 
 # Création de la fonction de génération de mot de passe, qui choisit 8 caractères dans la liste définie au début et le stocke dans la variable password
+### OK. Mais elle fait une dernière chose. La plus importante en fait, sinon, elle ne servirait à rien.
 def genpasswd():
     password = ""
     for i in range(8):
@@ -60,6 +66,9 @@ def genpasswd():
 
 
 # Création de la fonction de hashage en MD5 qui utilise le mot de passe généré précédement
+### Très approximativement.
+### La fonction "hashing" n'est au courant d'aucun "mot de passe généré précédemment".
+
 def hashing(input_password):
         md5hash = md5()
         md5hash.update(input_password.encode(encoding='ascii', errors='strict'))
@@ -92,6 +101,7 @@ def check_user(user=""):
         user = input("Which user are you looking for?\n>>> ")
 
 # Requète SQL qui va rechercher l'utilisateur dans la table users et affichera tous les résultats correspondants
+### "affichera" ... >> NOPE. Précisément...
     print("Checking user ' {:s} ' ...".format(user))
     dbcon_object.execute("SELECT uid,username FROM users WHERE username = ?", [user])
     return dbcon_object.fetchall()
