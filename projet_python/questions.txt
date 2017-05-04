@@ -1,0 +1,28 @@
+Concernant les imports :
+---------------------------------------------------------------------------------------------
+### Que sont "random", "hashlib", "sys", "string" et "sqlite3" 'pythoniquement' parlant ? (PS. le concept est similaire mais ce ne sont pas des librairies)
+### Pourquoi ne peut-on pas effectuer : "import md5" directement ?
+### Expliquer brièvement la différence entre la nature 'pythonique' de "hashlib" et "md5".
+
+###Bonus: Créer un fichier .py vide. Trouver un autre moyen d'invoquer "md5" en Python.
+
+
+Concernant les variables :
+---------------------------------------------------------------------------------------------
+### Que fait très exactement le code suivant : "userdb = {}" ? On s'attachera à préciser la nature de l'objet ainsi créé.
+### Se documenter sur le fonctionnement de "argv". Si possible, expliquer exactement ce qui se passe à la ligne "script = argv"
+### En l'état actuel du script, quel est le nom de la base de données ?
+### En combinant "argv" et "sqlite3", pourrait-on donner le choix à l'utilisateur d'utiliser la base de données qu'il/elle souhaite ?
+
+Concernant les fonctions :
+---------------------------------------------------------------------------------------------
+### Décrire les mots placés entre parenthèses dans la définition d'une fonction.
+Ques sont-ils ? à quoi servent-ils ?
+
+### Que cela signifie-t-il lorsqu'il n'y en a pas ?
+
+### Bonus : Dans "add_users", à la ligne :
+'  dbcon_object.execute("INSERT INTO users VALUES(null,?,?)", new_user)  '
+Pourquoi "null" comme premier paramètre à insérer ?
+
+### Dans "def check_user(user="")", en quoi le ' ="" ' modifie-t-il le comportement de la fonction ?
