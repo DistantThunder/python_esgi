@@ -6,7 +6,7 @@ import string
 import sqlite3
 
 
-##### VARIABLES
+# #### VARIABLES
 # Arguments en ligne de commande
 script = argv
 # Définition de l'espace de caractères pour nos mots de passe
@@ -16,32 +16,32 @@ char_space = string.ascii_letters+string.digits
 # print("Caractères utilisés : ", char_space,"\n")
 
 # Connection à la base de données SQLITE3
-# Créée automatiquement si elle n'existe pas et initi
+# Créée automatiquement si elle n'existe pas et initialisée
 db_object = sqlite3.connect("myldap.sqlite3")
 dbcon_cursor = db_object.cursor()
 
 
-#############################################################################>>>>>>>>>>>>>>>>> FONCTIONS
+# ############################################################################>>>>>>>>>>>>>>>>> FONCTIONS
 # Initialise la base de données si besoin
-def db_initialize(tableName):
+def db_initialize(table_name):
     # REQUÊTES SQLITE EFFECTUÉES AVEC SUBSTITUTION '?' AFIN DE MINIMISER RISQUES INJECTION SQL
-    dbcon_cursor.execute("SELECT 1 FROM sqlite_master WHERE type = ? AND name = ?", ["table", tableName])
-    qResult = dbcon_cursor.fetchone()
-    # L'EVALUATION RENVOIE 'False' SI qResult N'A AUCUN TYPE (==VIDE). DONC :
-    # SI qResult *- A UN TYPE -* ET DONC *-N'EST PAS VIDE-*, LA REQUÊTE SQLite PRÉCÉDENTE
+    dbcon_cursor.execute("SELECT 1 FROM sqlite_master WHERE type = ? AND name = ?", ["table", table_name])
+    q_result = dbcon_cursor.fetchone()
+    # L'EVALUATION RENVOIE 'False' SI q_result N'A AUCUN TYPE (==VIDE). DONC :
+    # SI q_result *- A UN TYPE -* ET DONC *-N'EST PAS VIDE-*, LA REQUÊTE SQLite PRÉCÉDENTE
     # A RENVOYÉ UNE VALEUR -> LA TABLE A ÉTÉ TROUVÉE.
-    if qResult:
-        print("Checking DATABASE...\nSQLite table ' {:s} ' exists! Proceeding...\n".format(tableName))
+    if q_result:
+        print("Checking DATABASE...\nSQLite table ' {:s} ' exists! Proceeding...\n".format(table_name))
         return 0
     else:
-        print("Table ' {:s} ' does not exist! Creating it before continuing...\n".format(tableName))
+        print("Table ' {:s} ' does not exist! Creating it before continuing...\n".format(table_name))
         # NOTE : LES NOMS DE TABLES NE **PEUVENT PAS** ÊTRE PASSÉS EN SUBSTITUTION DE PARAMÈTRE '?'!!!!
-        dbcon_cursor.execute("DROP TABLE IF EXISTS %s" % tableName)
+        dbcon_cursor.execute("DROP TABLE IF EXISTS %s" % table_name)
         dbcon_cursor.execute("""CREATE TABLE %s (
                                 uid INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
                                 username text,
                                 password CHAR(32)
-                                ) """ % tableName)
+                                ) """ % table_name)
         print("Done!\n\n")
         return 0
 
@@ -66,8 +66,8 @@ def hashing(input_password):
 def add_user():
     username = (input("Saisissez un nouvel utilisateur:\n>>> "))
     motpasse = genpasswd()
-    pwHash = (hashing(motpasse))
-    new_user = (username,pwHash)
+    pw_hash = (hashing(motpasse))
+    new_user = (username, pw_hash)
     print("Utilisateur => ' {:s} '\nMot de passe => {:s} \nHash => {:s}".format(new_user[0], motpasse, new_user[1]))
     dbcon_cursor.execute("INSERT INTO users VALUES(null,?,?)", new_user)
     return 0
@@ -143,8 +143,8 @@ def delete_user():
 
 def maj_user():
     print("Mise à jour du mot de passe.\n")
-    userToUpd = input("Entrez le nom de l'utilisateur dont vous souhaitez modifier le mot de passe :\n>>>")
-    qResult = check_user(userToUpd)
+    user_to_upd = input("Entrez le nom de l'utilisateur dont vous souhaitez modifier le mot de passe :\n>>>")
+    qResult = check_user(user_to_upd)
     if len(qResult) == 1:
             print("Un utilisateur a été trouvé.")
             print("Voulez-vous mettre à jour le mot de passe de {:s} ? o/N".format(qResult[0][1]))
@@ -178,7 +178,8 @@ def maj_user():
             print("+------------------------------------------------------+")
 
             maj_id = input("Entrez l'UID de l'utilisateur dont le mot de passe sera mis à jour:\n>>> ")
-            print("Voulez-vous mettre à jour le mot de passe de ' {:s} ' identifié par ' UID {:d} ' ? o/N".format(qResult[0][1], int(maj_id)))
+            print("Voulez-vous mettre à jour le mot de passe de ' {:s} ' identifié par ' UID {:d} ' ? o/N".format(
+                qResult[0][1], int(maj_id)))
             answer = input(">>>")
             if answer == "O" or "o":
                 print("ATTENTION ! Cette opération est irréversible!!\nEntrez 'OK' en toutes lettres pour confirmer:\n")
@@ -245,7 +246,7 @@ db_initialize("users")
 #     exit(1)
 
 
-#Définition de la fonction d'interface principale
+# Définition de la fonction d'interface principale
 def interface():
     print("\n" * 80)
     print("""
@@ -260,13 +261,13 @@ def interface():
     2016/2017 3A-SRC : OLANGUENA Yann & MALEZIEUX Éric
     \n""")
 
-#On explique ce qu'on attend de la personne qui lance le programme (les paramètres)
+# On explique ce qu'on attend de la personne qui lance le programme (les paramètres)
     print("Saisissez 'add' pour ajouter un utilisateur.\nSaisissez 'delete' pour effacer un utilisateur.\nSaisissez 'modify' pour mettre à jour un utilisateur.\nSaisissez 'login' pour vous connecter.\nSaisissez 'exit' pour sortir du programme.\n")
 
-#Déclaration de la variable boucle qui servira à imposer nos entrées
+# Déclaration de la variable boucle qui servira à imposer nos entrées
     boucle = True
 
-#Début de la boucle
+# Début de la boucle
     while boucle==True:
 #demande de saisie
         answer=input("Que voulez vous faire ?\n\n")
@@ -300,7 +301,7 @@ def interface():
         else:
             print("Saisie non reconnue\n")
 
-interface()
+# interface()
 
 
 
