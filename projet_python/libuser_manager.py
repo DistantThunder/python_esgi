@@ -15,15 +15,19 @@ char_space = string.ascii_letters+string.digits
 # Affichage dudit espace sur la sortie standard
 # print("Caractères utilisés : ", char_space,"\n")
 
-# Connection à la base de données SQLITE3
-# Créée automatiquement si elle n'existe pas et initialisée
-db_object = sqlite3.connect("myldap.sqlite3")
-dbcon_cursor = db_object.cursor()
-
 
 # ############################################################################>>>>>>>>>>>>>>>>> FONCTIONS
+
+# Initialise la CONNEXION à la base de données
+def dbcon_initialize(dbfile):
+    # Connection à la base de données SQLITE3
+    # Créée automatiquement si elle n'existe pas et initialisée
+    db_object = sqlite3.connect(dbfile)
+    return db_object.cursor()
+
+
 # Initialise la base de données si besoin
-def db_initialize(table_name):
+def db_initialize(table_name, dbcon_cursor):
     # REQUÊTES SQLITE EFFECTUÉES AVEC SUBSTITUTION '?' AFIN DE MINIMISER RISQUES INJECTION SQL
     dbcon_cursor.execute("SELECT 1 FROM sqlite_master WHERE type = ? AND name = ?", ["table", table_name])
     q_result = dbcon_cursor.fetchone()
@@ -62,8 +66,7 @@ def hashing(input_password):
         md5hash.update(input_password.encode(encoding='ascii', errors='strict'))
         return md5hash.hexdigest()
 
-
-def add_user():
+def add_user(dbcon_cursor):
     username = (input("Saisissez un nouvel utilisateur:\n>>> "))
     motpasse = genpasswd()
     pw_hash = (hashing(motpasse))
@@ -73,9 +76,9 @@ def add_user():
     return 0
 
 
-## Fonction "check_user" prend un nom d'utilisateur en argument et cherche dans la base de donnée utilisateurs.
-## Si aucun paramètre fournit en entrée, demande input nom d'utilisateur
-def check_user(user=""):
+# Fonction "check_user" prend un nom d'utilisateur en argument et cherche dans la base de donnée utilisateurs.
+# Si aucun paramètre fournit en entrée, demande input nom d'utilisateur
+def check_user(dbcon_cursor, user=""):
     # Un string vide renverra 'False', donc il vaut mieux inverser le test ici.
     if user == "":
         user = input("Which user are you looking for?\n>>> ")
@@ -85,145 +88,148 @@ def check_user(user=""):
     return dbcon_cursor.fetchall()
 
 
-def delete_user():
+def delete_user(dbcon_cursor):
         user = input("Which user are you deleting? \n>>> ")
-        qResult = check_user(user)
-        if len(qResult) == 1:
+        q_result = check_user(dbcon_cursor, user)
+        if len(q_result) == 1:
             print("Un utilisateur a été trouvé.")
-            print("Voulez-vous effacer l'utilisateur {:s} ? o/N".format(qResult[0][1]))
-            answer = input(">>>")
-            if answer == "O" or "o":
+            print("Voulez-vous effacer l'utilisateur {:s} ? o/N".format(q_result[0][1]))
+            answer = input(">>> ")
+            if answer in {'O', 'o'}:
                 print("ATTENTION! Cette opération est irréversible!!\nEntrez 'OK' en toutes lettres pour confirmer:\n")
-                confirm = input(">>>")
+                confirm = input(">>> ")
                 if confirm == "OK":
-                    print("Retrait de {:s}...\n".format(qResult[0][1]))
-                    dbcon_cursor.execute("DELETE FROM users WHERE uid = ? AND username = ?", [qResult[0][0], qResult[0][1]])
+                    print("Retrait de {:s}...\n".format(q_result[0][1]))
+                    dbcon_cursor.execute("DELETE FROM users WHERE uid = ? AND username = ?",
+                                         [q_result[0][0], q_result[0][1]])
                     print("Effectué.\n")
                 else:
                     print("Confirmation non reçue. Arrêt...\n")
-                    exit(1)
-            elif answer == "N" or "n":
+                    return 1
+            elif answer in {'N', 'n'}:
                 print("Il s'agit du seul utilisateur trouvé. Arrêt...\n")
-                exit(0)
+                return 0
             else:
                 print("Nous n'avons pas compris votre réponse. Arrêt...\n")
-                exit(1)
-        elif len(qResult) == 0:
+                return 1
+        elif len(q_result) == 0:
             print("Aucun utilisateur avec ce nom trouvé!!\n")
-            exit(0)
+            return 0
         else:
             print("Attention, plusieurs utilisateurs trouvés avec ce nom!\n")
             print("+------------------------------------------------------+")
             print("|           UID           |      Nom d'utilisateur     |")
             print("+------------------------------------------------------+")
-            for i in qResult:
+            for i in q_result:
                 print("|{:d}                        |{:s}                        |".format(i[0], i[1]))
             print("+------------------------------------------------------+")
 
             del_id = input("Entrez l'UID de l'utilisateur à supprimer:\n>>> ")
-            print("Voulez-vous effacer l'utilisateur {:s} identifié par UID {:d} ?".format(qResult[0][1], del_id))
-            answer = input(">>>")
-            if answer == "O" or "o":
+            print("Voulez-vous effacer l'utilisateur {:s} identifié par UID {:d} ?".format(q_result[0][1], del_id))
+            answer = input(">>> ")
+            if answer in {'O', 'o'}:
                 print("ATTENTION ! Cette opération est irréversible!!\nEntrez 'OK' en toutes lettres pour confirmer:\n")
-                confirm = input(">>>")
+                confirm = input(">>> ")
                 if confirm == "OK":
-                    print("Deleting {:s}...\n".format(qResult[0][1]))
-                    dbcon_cursor.execute("DELETE FROM users WHERE uid = ? AND username = ?", [qResult[0][0], qResult[0][1]])
+                    print("Deleting {:s}...\n".format(q_result[0][1]))
+                    dbcon_cursor.execute("DELETE FROM users WHERE uid = ? AND username = ?",
+                                         [q_result[0][0], q_result[0][1]])
                 else:
                     print("Confirmation non reçue. Arrêt...\n")
-                    exit(1)
-            elif answer == "N" or "n":
+                    return 1
+            elif answer in {'N', 'n'}:
                 print("Il s'agit du seul utilisateur trouvé. Arrêt...\n")
-                exit(0)
+                return 0
             else:
                 print("Nous n'avons pas compris votre réponse. Arrêt...\n")
-                exit(1)
+                return 1
         print("Done !\n")
 
 
-def maj_user():
+def maj_user(dbcon_cursor):
     print("Mise à jour du mot de passe.\n")
-    user_to_upd = input("Entrez le nom de l'utilisateur dont vous souhaitez modifier le mot de passe :\n>>>")
-    qResult = check_user(user_to_upd)
-    if len(qResult) == 1:
+    user_to_upd = input("Entrez le nom de l'utilisateur dont vous souhaitez modifier le mot de passe :\n>>> ")
+    q_result = check_user(dbcon_cursor, user_to_upd)
+    if len(q_result) == 1:
             print("Un utilisateur a été trouvé.")
-            print("Voulez-vous mettre à jour le mot de passe de {:s} ? o/N".format(qResult[0][1]))
-            answer = input(">>>")
-            if answer == "O" or "o":
+            print("Voulez-vous mettre à jour le mot de passe de {:s} ? o/N".format(q_result[0][1]))
+            answer = input(">>> ")
+            print(answer)
+            if answer in {'O', 'o'}:
                 print("ATTENTION! Cette opération est irréversible!!\nEntrez 'OK' en toutes lettres pour confirmer:\n")
-                confirm = input(">>>")
+                confirm = input(">>> ")
                 if confirm == "OK":
-                    newpassword = getpass("Entrez le nouveau mot de passe:\n>>>")
-                    dbcon_cursor.execute("UPDATE users SET password = ? WHERE uid = ?", [hashing(newpassword), qResult[0][0]])
-                    print("Mot de passe modifié pour {:s}".format(qResult[0][1]))
+                    new_password = getpass("Entrez le nouveau mot de passe:\n>>> ")
+                    dbcon_cursor.execute("UPDATE users SET password = ? WHERE uid = ?",
+                                         [hashing(new_password), q_result[0][0]])
+                    print("Mot de passe modifié pour {:s}".format(q_result[0][1]))
                 else:
                     print("Confirmation non reçue. Arrêt...\n")
-                    exit(1)
-            elif answer == "N" or "n":
+                    return 1
+            elif answer in {'N', 'n'}:
                 print("Il s'agit du seul utilisateur trouvé. Abandon...\n")
-                exit(0)
+                return 1
             else:
                 print("Nous n'avons pas compris votre réponse. Abandon...\n")
-                exit(1)
-    elif len(qResult) == 0:
+                return 1
+    elif len(q_result) == 0:
             print("Aucun utilisateur avec ce nom trouvé!!\n")
-            exit(0)
+            return 0
     else:
             print("Attention, plusieurs utilisateurs trouvés avec ce nom!\n")
             print("+------------------------------------------------------+")
             print("|           UID           |      Nom d'utilisateur     |")
             print("+------------------------------------------------------+")
-            for i in qResult:
+            for i in q_result:
                 print("|{:d}                        |{:s}                         |".format(i[0], i[1]))
             print("+------------------------------------------------------+")
 
             maj_id = input("Entrez l'UID de l'utilisateur dont le mot de passe sera mis à jour:\n>>> ")
             print("Voulez-vous mettre à jour le mot de passe de ' {:s} ' identifié par ' UID {:d} ' ? o/N".format(
-                qResult[0][1], int(maj_id)))
-            answer = input(">>>")
-            if answer == "O" or "o":
+                q_result[0][1], int(maj_id)))
+            answer = input(">>> ")
+            if answer in {'O', 'o'}:
                 print("ATTENTION ! Cette opération est irréversible!!\nEntrez 'OK' en toutes lettres pour confirmer:\n")
-                confirm = input(">>>")
+                confirm = input(">>> ")
                 if confirm == "OK":
-                    newpassword = getpass("Entrez le nouveau mot de passe:\n>>>")
-                    dbcon_cursor.execute("UPDATE users SET password = ? WHERE uid = ?", ([hashing(newpassword), int(maj_id)]))
-                    print("Mot de passe modifié pour {:s}".format(qResult[0][1]))
+                    new_password = getpass("Entrez le nouveau mot de passe:\n>>> ")
+                    dbcon_cursor.execute("UPDATE users SET password = ? WHERE uid = ?",
+                                         ([hashing(new_password), int(maj_id)]))
+                    print("Mot de passe modifié pour {:s}".format(q_result[0][1]))
                 else:
                     print("Confirmation non reçue. Abandon...\n")
-                    exit(1)
-            elif answer == "N" or "n":
-                print("No Arrêt...\n")
-                exit(0)
+            elif answer in {'N', 'n'}:
+                print("Retour au menu principal.\n")
+                return 1
             else:
                 print("Nous n'avons pas compris votre réponse. Arrêt...\n")
-                exit(1)
+                return 1
 
-
-def user_login():
-    loguser = input("Nom d'utilisateur : \n>>>")
-    logpass = getpass("Mot de passe: \n>>>")
-    qResult = check_user(loguser)
-    if len(qResult) >= 1:
-        dbcon_cursor.execute("SELECT * from users WHERE username = ? AND password = ?", [loguser, hashing(logpass)])
+def user_login(dbcon_cursor):
+    log_user = input("Nom d'utilisateur : \n>>> ")
+    log_pass = getpass("Mot de passe: \n>>> ")
+    q_result = check_user(dbcon_cursor, log_user)
+    if len(q_result) >= 1:
+        dbcon_cursor.execute("SELECT * from users WHERE username = ? AND password = ?", [log_user, hashing(log_pass)])
         auth_response = dbcon_cursor.fetchall()
         if len(auth_response) >= 1:
             print("Bravo, vous êtes authentifié!")
-            exit(0)
+            return 0
         else:
             print("Mot de passe erroné pour cet utilisateur.\n")
-            exit(1)
+            return 1
     else:
         print("Utilisateur non-existant.\n")
-        exit(1)
+        return 1
 
 
+# ####################################################>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> EXÉCUTION
 
+# dbcon_cursor = None
 
-#####################################################>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> EXÉCUTION
-
-####### ACCESS CONTROL #######
+# ###### ACCESS CONTROL #######
 # adminPw = "b604f00b579a3011b3778c07747664f1334dcad66daa4b8c6cd07021cbda2ad10a81047a387d4a79999c10f188a5e103"
-# inputPw = getpass("Entrez le mot de passe administrateur:\n>>>")
+# inputPw = getpass("Entrez le mot de passe administrateur:\n>>> ")
 # admin = 0
 #
 #
@@ -233,9 +239,9 @@ def user_login():
 # else:
 #     admin = 0
 #     print("Échec authentification")
-#     exit(1)
+#     return 1
 #
-db_initialize("users")
+# db_initialize("users")
 #
 # ### SEUL L'ADMIN PEUT SUPPRIMER DES UTILISATEURS ARBITRAIREMENT
 # if admin == 1:
@@ -243,70 +249,7 @@ db_initialize("users")
 #     delete_user()
 # else:
 #     print("Your are not admin!!\nExiting...")
-#     exit(1)
-
-
-# Définition de la fonction d'interface principale
-def interface():
-    print("\n" * 80)
-    print("""
-    ##########################################################################
-    ##  _____ ____   ____ ___           ______   _______ _   _  ___  _   _  ##
-    ## | ____/ ___| / ___|_ _|         |  _ \ \ / /_   _| | | |/ _ \| \ | | ##
-    ## |  _| \___ \| |  _ | |   _____  | |_) \ V /  | | | |_| | | | |  \| | ##
-    ## | |___ ___) | |_| || |  |_____| |  __/ | |   | | |  _  | |_| | |\  | ##
-    ## |_____|____/ \____|___|         |_|    |_|   |_| |_| |_|\___/|_| \_| ##
-    ##                                                                      ##
-    ##########################################################################
-    2016/2017 3A-SRC : OLANGUENA Yann & MALEZIEUX Éric
-    \n""")
-
-# On explique ce qu'on attend de la personne qui lance le programme (les paramètres)
-    print("Saisissez 'add' pour ajouter un utilisateur.\nSaisissez 'delete' pour effacer un utilisateur.\nSaisissez 'modify' pour mettre à jour un utilisateur.\nSaisissez 'login' pour vous connecter.\nSaisissez 'exit' pour sortir du programme.\n")
-
-# Déclaration de la variable boucle qui servira à imposer nos entrées
-    boucle = True
-
-# Début de la boucle
-    while boucle==True:
-#demande de saisie
-        answer=input("Que voulez vous faire ?\n\n")
-
-#Ajout de l'utilisateur
-        if answer=="add":
-            print("Ajout utilisateur\n")
-            add_user()
-# ENREGISTREMENT DES CHANGEMENTS SUR LA BDD "PHYSIQUE"
-            db_object.commit()
-#Suppression de l'utilisateur
-        elif answer=="delete":
-            print("Suppression utilisateur\n")
-            delete_user()
-# ENREGISTREMENT DES CHANGEMENTS SUR LA BDD "PHYSIQUE"
-            db_object.commit()
-#Modification de l'utilisateur
-        elif answer=="modify":
-            print("Modification de l'utilisateur\n")
-            maj_user()
-# ENREGISTREMENT DES CHANGEMENTS SUR LA BDD "PHYSIQUE"
-            db_object.commit()
-        elif answer=="login":
-            print("Test d'authentification")
-            user_login()
-#Sortie du programme
-        elif answer=="exit":
-            boucle=False
-            print("Sortie du programme\n")
-#Redemande de saisir tant que ce n'est pas un de nos paramètres
-        else:
-            print("Saisie non reconnue\n")
-
-# interface()
+#     return 1
 
 
 
-# Fermeture de la connexion à la BDD
-db_object.close()
-
-del dbcon_cursor
-del db_object
