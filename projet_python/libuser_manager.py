@@ -66,6 +66,7 @@ def hashing(input_password):
         md5hash.update(input_password.encode(encoding='ascii', errors='strict'))
         return md5hash.hexdigest()
 
+
 def add_user(dbcon_cursor):
     username = (input("Saisissez un nouvel utilisateur:\n>>> "))
     motpasse = genpasswd()
@@ -204,6 +205,7 @@ def maj_user(dbcon_cursor):
             else:
                 print("Nous n'avons pas compris votre réponse. Arrêt...\n")
                 return 1
+
 
 def user_login(dbcon_cursor):
     log_user = input("Nom d'utilisateur : \n>>> ")
