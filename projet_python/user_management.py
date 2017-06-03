@@ -1,4 +1,5 @@
 import libuser_manager
+from libuser_manager import UserMgmt as um
 from random import choice
 from hashlib import md5
 from sys import argv
@@ -7,12 +8,8 @@ import string
 from sys import exit
 import sqlite3
 
-# Initialisation de la connexion à la BDD SQLITE
-dbcon_cursor = libuser_manager.dbcon_initialize("myldap.sqlite3")
-# Initialisation de la table "users"
-libuser_manager.db_initialize("users", dbcon_cursor)
 
-# Définition de la fonction
+# Définition de la fonction principale d'interface
 
 
 def interface():
@@ -29,9 +26,10 @@ def interface():
     2016/2017 3A-SRC : OLANGUENA Yann & MALEZIEUX Éric
     \n""")
 
+# # Variables
 # Déclaration de la variable boucle qui servira à imposer nos entrées
     boucle = True
-
+# Variable instance1 qui servira de référence pour la classe UserMgmt.
 # Début de la boucle / "boucle == True" superflu.
     while boucle:
         # Demande de saisie, 'eval' évalue la valeur retournée par 'input' comme une expression python
@@ -39,6 +37,7 @@ def interface():
         try:
             # On explique ce qu'on attend de la personne qui lance le programme (les paramètres)
             print("""
+            0. Initialisation.\n
             1. Ajout d'un utilisateur.\n
             2. Retrait d'un utilisateur.\n
             3. Mise à jour des informations d'un utilisateur.\n
@@ -47,46 +46,72 @@ def interface():
             """)
 
             answer = eval(input("Que voulez-vous faire ?\n\n>>> "))
+            if answer == 0:
+                print("Initialisation de la connexion à la BDD\n")
+                instance1 = um("myUserDB.sqlite")
+
+                if instance1.db_initialize("users"):
+                    print("Initialisation réussie !\n")
+                else:
+                    print("Echec de l'initialisation.\n")
+                    print("Fin du programme...\n")
+                    exit(1)
             # Ajout de l'utilisateur
-            if answer == 1:
+            elif answer == 1:
                 print("Ajout utilisateur\n")
-                libuser_manager.add_user(dbcon_cursor)
+                instance1.add_user()
                 print("\nOpération terminée.\n")
     # Suppression de l'utilisateur
             elif answer == 2:
                 print("Suppression utilisateur\n")
-                libuser_manager.delete_user(dbcon_cursor)
+                instance1.delete_user()
     # Modification de l'utilisateur
             elif answer == 3:
                 print("Modification de l'utilisateur\n")
-                libuser_manager.maj_user(dbcon_cursor)
+                instance1.maj_user()
             elif answer == 4:
                 print("Test d'authentification")
-                libuser_manager.user_login(dbcon_cursor)
+                instance1.user_login()
     # Sortie du programme
             elif answer == 5:
-                boucle=False
+                boucle = False
+                # Quand on sort du menu, nettoyer les connecteurs de BDD
+                instance1.close_db_connector()
                 print("\n\nFin du programme...\n")
                 return 0
-    # Redemande de saisir tant que ce n'est pas un de nos paramètre
+    # Redemande de saisir tant que ce n'est pas un de nos paramètre en retournant au début de la boucle
         except EOFError:
             print("Saisie non reconnue !\nEntrez '5' pour sortir du programme.\n")
+    # Attrape les caractères spéciaux et retourne au début de la boucle.
+        except SyntaxError:
+            print("Saisie non reconnue !\nEntrez '5' pour sortir du programme.\n")
+    # Attrape le signal d'erreur d'une instance non déclarée (ou dont le scope est mauvais)
+        except UnboundLocalError as U:
+            print("Aucune instance de la classe de gestion des utilisateurs détectée:\n")
+            print(U, "\n")
+            print("Fin du programme...\n")
+            exit(1)
+    # Attrape les erreurs du module sqlite3
+        except sqlite3.OperationalError:
+            print("Erreur SQL ...\n")
+            print("Fermeture du connecteur de la base de données")
+            if instance1.close_db_connector():
+                print("Connecteur fermé.\nFin du programme...\n")
+                exit(0)
+            else:
+                print("Echec de la fermeture du connecteur.\nFin du programme...\n")
+                exit(1)
     # Attrape le signal "KeyboardInterrupt" qui permet de mettre fin arbitrairement à un programme
     # et nous permet de terminer ce dernier "gracieusement".
         except KeyboardInterrupt:
-            boucle=False
-            print("\n\nFin du programme...\n")
-            return 1
+            print("Fermeture du connecteur de la base de données")
+            if instance1.close_db_connector():
+                print("Connecteur fermé.\nFin du programme...\n")
+                exit(0)
+            else:
+                print("Échec de la fermeture du connecteur.\nFin du programme...\n")
+                exit(1)
 
 # Lancement de l'interface
 interface()
 
-# Quand on sort du menu, nettoyer les connecteurs de BDD
-print("Cleaning up DB connector... \n")
-try:
-    del dbcon_cursor
-    print("Done.")
-    exit(0)
-except NameError:
-    print("Couldn't properly close DB connector!")
-    exit(1)
